@@ -28,6 +28,7 @@ Ord Label where
 
 public export
 interface CanManageLabels (0 m : Type -> Type) where
+  %inline
   manageLabel : Label -> m a -> m a
 
 export %defaulthint
@@ -35,3 +36,4 @@ IgnoreLabels : CanManageLabels m
 IgnoreLabels = I where
   [I] CanManageLabels m where
     manageLabel _ = id
+
