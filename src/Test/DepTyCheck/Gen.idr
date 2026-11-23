@@ -444,13 +444,23 @@ committed ls = map $ \case
 ||| No randomness is involved, the generator is examined until the first value or the first raw generator.
 covering
 structEmpty : Gen em a -> Conts a b -> Bool
+
+||| Checks whether all the given alternatives are structurally empty, stopping at the first non-empty one.
+|||
+||| This is written explicitly, because `all` from the prelude, being implemented through `foldMap`,
+||| looks at every element of a list, which makes the check exponential in the depth of the generator.
+covering
+allStructEmpty : LazyLst ne (Nat1, Lazy (Gen em c)) -> Conts c b -> Bool
+allStructEmpty []             _  = True
+allStructEmpty ((_, g) :: gs) ks = structEmpty g ks && allStructEmpty gs ks
+
 structEmpty Empty            _         = True
 structEmpty (Pure x)         []        = False
 structEmpty (Pure x)         (k :: ks) = structEmpty (k x) ks
 structEmpty (Raw _)          _         = False
 structEmpty (Bind _ _)       _         = False
 structEmpty (Labelled _ g)   ks        = structEmpty g ks
-structEmpty (OneOf oo)       ks        = all (\g => structEmpty (force $ snd g) ks) oo.unGenAlts
+structEmpty (OneOf oo)       ks        = allStructEmpty oo.unGenAlts ks
 structEmpty (Then _ g k)     ks        = structEmpty g $ k :: ks
 structEmpty (Hidden _ g _)   _         = structEmpty g []
 
